@@ -241,14 +241,17 @@ ul {
     font-weight: 700;
     margin-right: 8px;
 }
+
 .stepper li.completed .circle {
     background: #16a34a;
     color: #fff;
 }
+
 .stepper li.active .circle {
     background: #0d6efd;
     color: #fff;
 }
+
 .stepper .label {
     font-weight: 600;
 }
@@ -257,4 +260,18 @@ ul {
 #progressText {
     display: inline-block;
     margin-top: 6px;
+}
+
+/* Step status coloring: 0=grey, 1=yellow, 2=green */
+.stepper li .circle.status-0 {
+    background: #e5e7eb; /* gray-200 */
+    color: #374151;      /* gray-700 */
+}
+.stepper li .circle.status-1 {
+    background: #f59e0b; /* amber-500 */
+    color: #111827;      /* near-black for contrast */
+}
+.stepper li .circle.status-2 {
+    background: #16a34a; /* green-600 */
+    color: #ffffff;
 }

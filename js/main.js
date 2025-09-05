@@ -43,7 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'function getCurrentStep(address wallet) view returns (uint8)',
         'function currentStep(address wallet) view returns (uint8)',
         'function getCompletedSteps(address wallet) view returns (uint8)',
-        'function completedSteps(address wallet) view returns (uint8)'
+        'function completedSteps(address wallet) view returns (uint8)',
+        'function getStepStatus(address wallet, uint8 step) view returns (uint8)'
     ];
 
     if (!connectBtn) return;
@@ -104,6 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
         setProgress(0);
         highlightSteps(0, -1);
         clearBadge();
+        // Clear per-step status coloring
+        stepItems.forEach((li) => {
+            const circle = li.querySelector('.circle');
+            if (!circle) return;
+            circle.classList.remove('status-0', 'status-1', 'status-2');
+        });
     }
 
     async function loadABI() {
@@ -138,7 +145,44 @@ document.addEventListener('DOMContentLoaded', () => {
         const completedNum = typeof completed === 'bigint' ? Number(completed) : Number(completed || 0);
         // If completed not available, infer from current
         const inferredCompleted = completedNum || Math.max(0, currentNum - 1);
-        return { currentStep: currentNum, completed: inferredCompleted };
+        return { currentStep: currentNum, completed: inferredCompleted, contract };
+    }
+
+    function applyStatusToStep(indexZeroBased, status) {
+        const li = stepItems.find(el => Number(el.getAttribute('data-step-index')) === indexZeroBased);
+        if (!li) return;
+        const circle = li.querySelector('.circle');
+        if (!circle) return;
+        circle.classList.remove('status-0', 'status-1', 'status-2');
+        const s = Math.max(0, Math.min(2, Number(status || 0)));
+        circle.classList.add(`status-${s}`);
+    }
+
+    async function updateStepStatuses(contract, account, fallbackFrom) {
+        // Try using contract.getStepStatus for steps 1..TOTAL_STEPS
+        let statuses = [];
+        let usedOnChain = true;
+        try {
+            const queries = Array.from({ length: TOTAL_STEPS }, (_, i) => {
+                const stepNum = i + 1; // contract is 1-indexed
+                return contract.getStepStatus(account, stepNum).then(v => (typeof v === 'bigint' ? Number(v) : Number(v))).catch(() => undefined);
+            });
+            statuses = await Promise.all(queries);
+            // If all undefined, treat as missing support
+            if (statuses.every(v => v === undefined)) usedOnChain = false;
+        } catch (_) {
+            usedOnChain = false;
+        }
+        if (!usedOnChain) {
+            // Fallback: 2 for completed, 1 for current step, 0 otherwise
+            statuses = Array.from({ length: TOTAL_STEPS }, (_, i) => {
+                const stepNum = i + 1;
+                if (fallbackFrom && stepNum <= Number(fallbackFrom.completed)) return 2;
+                if (fallbackFrom && stepNum === Number(fallbackFrom.currentStep)) return 1;
+                return 0;
+            });
+        }
+        statuses.forEach((st, i) => applyStatusToStep(i, st));
     }
 
     async function maybeSwitchToSepolia() {
@@ -154,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA_CHAIN_HEX }] });
                 return true;
             } catch (err) {
-                // 4902: Unrecognized chain, try adding
                 if (err && (err.code === 4902 || err.code === -32603)) {
                     try {
                         await eth.request({
@@ -198,11 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (net && net.chainId === SEPOLIA_CHAIN_ID) {
                 const { address, abi } = await loadABI();
                 try {
-                    const { currentStep, completed } = await fetchSteps(provider, account, address, abi);
+                    const { currentStep, completed, contract } = await fetchSteps(provider, account, address, abi);
                     badge.textContent = String(currentStep);
                     badge.title = `Current step for ${account}`;
                     setProgress(completed);
                     highlightSteps(completed, currentStep);
+                    await updateStepStatuses(contract, account, { currentStep, completed });
                 } catch (err) {
                     console.error('Failed to fetch steps:', err);
                     clearBadge();
@@ -229,14 +273,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const accounts = await provider.send('eth_requestAccounts', []);
             const account = accounts[0];
 
-            // Offer to switch to Sepolia if needed
             const net = await provider.getNetwork();
             if (!net || net.chainId !== SEPOLIA_CHAIN_ID) {
                 await maybeSwitchToSepolia();
             }
 
             await refreshSession(new ethers.BrowserProvider(window.ethereum), account);
-            // Persist simple session
             sessionStorage.setItem('connectedAccount', account);
         } catch (e) {
             console.error('Failed to connect:', e);
