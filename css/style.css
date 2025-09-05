@@ -150,6 +150,9 @@ ul {
 
 .wallet-session {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .wallet-avatar {
@@ -159,6 +162,27 @@ ul {
     border: 2px solid #0d6efd;
     background: linear-gradient(135deg, #dbeafe, #93c5fd);
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #0b265e;
+}
+
+/* Small badge displayed to the left of avatar with current step */
+.wallet-step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #0d6efd;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 700;
 }
 
 .wallet-menu {
@@ -202,4 +226,35 @@ ul {
 
 .d-none {
     display: none !important;
+}
+
+/* Stepper highlighting */
+.stepper li .circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #374151;
+    font-weight: 700;
+    margin-right: 8px;
+}
+.stepper li.completed .circle {
+    background: #16a34a;
+    color: #fff;
+}
+.stepper li.active .circle {
+    background: #0d6efd;
+    color: #fff;
+}
+.stepper .label {
+    font-weight: 600;
+}
+
+/* Progress text spacing */
+#progressText {
+    display: inline-block;
+    margin-top: 6px;
 }
