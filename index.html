@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CS50.me:
+        CS50B Blockchain
+    </title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
+    <!-- Bootstrap core CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Material Design Bootstrap -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.8.5/css/mdb.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="wallet-ui" class="wallet-ui">
+        <button id="connectWalletBtn" class="btn btn-sm btn-primary">Connect Wallet</button>
+        <div id="walletSession" class="wallet-session d-none">
+            <button id="walletAvatar" class="wallet-avatar" aria-expanded="false" aria-controls="walletMenu"
+                title="Wallet menu"></button>
+            <div id="walletMenu" class="wallet-menu" hidden>
+                <div class="wm-row"><span class="wm-label">Address</span><span id="walletAddress"
+                        class="wm-value mono"></span></div>
+                <div class="wm-row"><span class="wm-label">Network</span><span id="walletChain" class="wm-value"></span>
+                </div>
+                <div class="wm-row"><span class="wm-label">Balance</span><span id="walletBalance"
+                        class="wm-value"></span></div>
+                <div class="wm-actions">
+                    <button id="walletCopyBtn" class="btn btn-sm btn-outline-secondary">Copy</button>
+                    <button id="walletDisconnectBtn" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="text-center">
+
+            <h1 class="center" style="margin-top: 1cm;">CS50B Blockchain</h1>
+            <div class="text-center">
+                <img class="rounded mx-auto d-block" src="https://github.com/diegobianqui.png" height="128px"
+                    width="128px" alt="Github profile image for user: diegobianqui" />
+            </div>
+            <h3 id="gradebookTitle" class="center">Gradebook for diegobianqui</h3>
+
+
+
+            <div class="center">edX Account: diegobianqui</div>
+
+
+            <div class="center">
+                View submissions for this course on
+                <a href="https://submit.cs50.io/courses/30" target="_blank">
+                    https://submit.cs50.io/courses/30
+                </a>
+            </div>
+
+            <div class="center">
+                View all submissions on
+                <a href="https://submit.cs50.io/users/diegobianqui" target="_blank">
+                    https://submit.cs50.io/users/diegobianqui
+                </a>
+            </div>
+
+
+            <hr>
+
+            <h4 class="center">Current Progress</h4>
+        </div>
+        <div class="progress ">
+            <div class="progress-bar " role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0"
+                aria-valuemax="100">
+            </div>
+        </div>
+        0 of 10 assignments complete.
+
+
+        <div class="alert alert-info" role="alert">
+            During the week of 6 January 2025, our gradebooks archived all 2024 progress; be sure to review your
+            course's FAQ for exactly how this may affect what you see on this page in the meantime!
+        </div>
+
+
+        <div class="row mt-1">
+            <div class="col-md-12">
+                <ul class="stepper stepper-vertical">
+
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">P0</span>
+                            <span class="label">Project 0: Search</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                            Your submission has been received. Be sure you've submitted your Google Form as well!
+                            It may take up to three weeks for your submission to be graded, please be patient. Also note
+                            that your submissions will not necessarily be graded in order.
+
+                        </div>
+                    </li>
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">P1</span>
+                            <span class="label">Project 1: Wiki</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                        </div>
+                    </li>
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">P2</span>
+                            <span class="label">Project 2: Commerce</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                        </div>
+                    </li>
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">P3</span>
+                            <span class="label">Project 3: Mail</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                        </div>
+                    </li>
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">P4</span>
+                            <span class="label">Project 4: Network</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                        </div>
+                    </li>
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">P5</span>
+                            <span class="label">Project 5: TBD</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                        </div>
+                    </li>
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">P6</span>
+                            <span class="label">Project 6: TBD</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                        </div>
+                    </li>
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">P7</span>
+                            <span class="label">Project 7: TBD</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                        </div>
+                    </li>
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">P8</span>
+                            <span class="label">Project 8: TBD</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                        </div>
+                    </li>
+
+                    <li class="">
+                        <a class="nohover" href="#!">
+                            <span class="circle">FP</span>
+                            <span class="label">Final Project</span>
+                        </a>
+                        <div class="step-content" style="width: 100%">
+
+                        </div>
+                    </li>
+
+
+                </ul>
+            </div>
+        </div>
+
+        <hr>
+
+        <a href="/" class="btn btn-sm btn-primary">
+            Back to All Courses
+        </a>
+
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"
+        referrerpolicy="no-referrer"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
