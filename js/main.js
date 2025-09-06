@@ -258,6 +258,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Helper: keep the GitHub icon while updating button text
+    function setSubmitBtnLabel(btnEl, label) {
+        if (!btnEl) return;
+        const icon = btnEl.querySelector('i');
+        // Rebuild content: icon + text node
+        btnEl.textContent = '';
+        if (icon) btnEl.appendChild(icon);
+        btnEl.appendChild(document.createTextNode(label));
+    }
+
     // Create or remove the Submit button for the current step based on statuses
     function updateSubmitButton(provider, contract, account, currentStep, statuses) {
         // Remove existing buttons and action subitems to keep only one visible at a time
@@ -279,9 +289,13 @@ document.addEventListener('DOMContentLoaded', () => {
         wrap.className = 'action-subitem mt-2';
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'btn btn-sm btn-primary submit-step-btn';
-        btn.textContent = 'Submit';
+        btn.className = 'btn btn-sm btn-github submit-step-btn';
         btn.title = `Submit step ${stepNum}`;
+        // Add GitHub icon + label
+        const icon = document.createElement('i');
+        icon.className = 'fab fa-github mr-1';
+        btn.appendChild(icon);
+        btn.appendChild(document.createTextNode('submit50'));
         btn.addEventListener('click', async () => {
             await submitCurrentStep(provider, contract, stepNum, account, btn);
         });
@@ -305,15 +319,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Submit not supported by contract.');
                 return;
             }
-            if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Submitting...'; }
+            if (btnEl) { btnEl.disabled = true; setSubmitBtnLabel(btnEl, 'Submitting...'); }
             const tx = await writable[method]();
             await tx.wait();
-            if (btnEl) { btnEl.textContent = 'Submitted'; }
+            if (btnEl) { setSubmitBtnLabel(btnEl, 'Submitted'); }
             // Refresh session to reflect new statuses
             await refreshSession(new ethers.BrowserProvider(window.ethereum), account);
         } catch (e) {
             console.error('Submit failed:', e);
-            if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Submit'; }
+            if (btnEl) { btnEl.disabled = false; setSubmitBtnLabel(btnEl, 'submit50'); }
             alert('Transaction failed or was rejected.');
         }
     }

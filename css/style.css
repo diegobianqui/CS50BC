@@ -397,7 +397,7 @@ ul {
 }
 
 /* Only absolutely position submit buttons that are direct children of <li> (legacy placement) */
-.stepper li > .submit-step-btn {
+.stepper li>.submit-step-btn {
     position: absolute;
     top: 4px;
     right: 0;
@@ -405,7 +405,7 @@ ul {
 }
 
 @media (max-width: 720px) {
-    .stepper li > .submit-step-btn {
+    .stepper li>.submit-step-btn {
         position: static;
         top: auto;
         right: auto;
@@ -498,4 +498,28 @@ ul {
 
 .action-subitem .submit-step-btn {
     margin-top: 2px;
+}
+
+/* GitHub purple button theme for Submit */
+.btn-github {
+    background-color: #6e40c9 !important;
+    /* GitHub purple */
+    border-color: #6e40c9 !important;
+    color: #fff !important;
+}
+
+.btn-github:hover,
+.btn-github:focus {
+    background-color: #5b32a8 !important;
+    border-color: #5b32a8 !important;
+    color: #fff !important;
+}
+
+.btn-github:disabled {
+    opacity: 0.8;
+}
+
+/* Ensure left alignment within sub-item */
+.action-subitem .submit-step-btn.btn-github {
+    margin-left: 0 !important;
 }
