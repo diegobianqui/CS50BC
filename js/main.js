@@ -138,6 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         // Remove any submit buttons
         document.querySelectorAll('.submit-step-btn').forEach(btn => btn.remove());
+        // Remove any submitted-note messages when not logged in
+        document.querySelectorAll('.submitted-note').forEach(note => note.remove());
         // Hide progress UI when not connected or off sepolia
         progressHeader && progressHeader.classList.add('d-none');
         progressContainer && progressContainer.classList.add('d-none');
