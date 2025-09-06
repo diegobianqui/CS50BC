@@ -287,3 +287,21 @@ ul {
     font-family: inherit !important;
     font-weight: 700 !important;
 }
+
+/* Stronger override against framework defaults that paint circles blue */
+.stepper.stepper-vertical li .circle {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+/* When our status-* classes are present, they must win */
+.stepper.stepper-vertical li .circle.status-0 { background: #e5e7eb !important; color: #374151 !important; }
+.stepper.stepper-vertical li .circle.status-1 { background: #f59e0b !important; color: #111827 !important; }
+.stepper.stepper-vertical li .circle.status-2 { background: #16a34a !important; color: #ffffff !important; }
+
+/* Prevent any link hover/focus styles from recoloring ".circle" */
+.stepper.stepper-vertical a.nohover:hover .circle,
+.stepper.stepper-vertical a.nohover:focus .circle {
+    background: inherit !important;
+    color: inherit !important;
+}

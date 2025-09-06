@@ -105,11 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
         setProgress(0);
         highlightSteps(0, -1);
         clearBadge();
-        // Clear per-step status coloring
+        // Set all circles to Pending (status-0) by default
         stepItems.forEach((li) => {
             const circle = li.querySelector('.circle');
             if (!circle) return;
             circle.classList.remove('status-0', 'status-1', 'status-2');
+            circle.classList.add('status-0');
         });
     }
 
@@ -351,6 +352,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (account) await refreshSession(provider, account);
         });
     }
+
+    // Initialize default Pending status to avoid blue before connection
+    resetProgressUI();
 
     tryAutoConnect();
 })();
