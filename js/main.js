@@ -1,9 +1,14 @@
+// filepath: /Users/diego/CS50BC/CS50BC/js/main.js
+// Main client-side script for the CS50B Gradebook demo.
+// It sets up basic UI behaviors, integrates MetaMask via ethers.js v6,
+// reads on-chain progress from a Sepolia contract, and updates the stepper UI.
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Set current year in footer
+    // Populate the current year in the footer, if present
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-    // Mobile nav toggle
+    // Simple mobile nav toggle accessibility: maintain aria-expanded state
     const toggle = document.querySelector('.nav-toggle');
     const menu = document.getElementById('nav-menu');
     if (toggle && menu) {
@@ -16,10 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Wallet / MetaMask + ethers.js v6
 (function () {
+    // Total steps in the gradebook flow (1-indexed on-chain, 0-indexed in DOM data attributes)
     const TOTAL_STEPS = 10;
+    // Sepolia chain IDs in bigint (from ethers) and hex (for wallet_switchEthereumChain)
     const SEPOLIA_CHAIN_ID = 11155111n;
     const SEPOLIA_CHAIN_HEX = '0xaa36a7';
 
+    // Cache top-right wallet UI elements
     const connectBtn = document.getElementById('connectWalletBtn');
     const sessionBox = document.getElementById('walletSession');
     const avatarBtn = document.getElementById('walletAvatar');
@@ -34,10 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
 
-    // Step items
+    // All stepper <li> elements with a data-step-index (0..9)
     const stepItems = Array.from(document.querySelectorAll('.stepper [data-step-index]'));
 
-    // Contract details (Sepolia)
+    // Contract details on Sepolia. We attempt to load from contractABI.json with these fallbacks.
     const FALLBACK_CONTRACT_ADDRESS = '0xdd63024953ad565748493F6B48a54E4886809667';
     const FALLBACK_CONTRACT_ABI = [
         'function getCurrentStep(address wallet) view returns (uint8)',
@@ -47,16 +55,20 @@ document.addEventListener('DOMContentLoaded', () => {
         'function getStepStatus(address wallet, uint8 step) view returns (uint8)'
     ];
 
+    // If the page has no connect button, bail out (nothing to wire up)
     if (!connectBtn) return;
 
+    // Basic provider existence check
     const hasMetaMask = typeof window.ethereum !== 'undefined';
 
+    // Render a tiny 2-character avatar seed from the wallet address (e.g., '0xAB...')
     function shortAddr(addr) {
         if (!addr) return '';
         const two = addr.startsWith('0x') ? addr.slice(2, 4) : addr.slice(0, 2);
         return two.toUpperCase();
     }
 
+    // Ensure a small numeric badge element exists near the avatar to show current step
     function ensureStepBadge() {
         let badge = document.getElementById('walletStepBadge');
         if (!badge) {
@@ -71,12 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return badge;
     }
 
+    // Clear the current-step badge content and tooltip
     function clearBadge() {
         const badge = ensureStepBadge();
         badge.textContent = '';
         badge.title = '';
     }
 
+    // Update progress bar width and textual summary from a completed steps count
     function setProgress(completedCount) {
         const completed = Math.max(0, Math.min(TOTAL_STEPS, Number(completedCount || 0)));
         const pct = Math.round((completed / TOTAL_STEPS) * 100);
@@ -89,6 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Highlight completed and active steps in the stepper
+    // - completedCount is a number of steps fully done
+    // - currentStepNum is a 1-based index from the contract (or bigint); convert to 0-based for DOM
     function highlightSteps(completedCount, currentStepNum) {
         const completed = Number(completedCount || 0);
         const currentIdx = typeof currentStepNum === 'number' ? currentStepNum - 1 : (typeof currentStepNum === 'bigint' ? Number(currentStepNum) - 1 : -1);
@@ -101,11 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Reset progress visuals to a neutral state (before connection or when disconnected)
     function resetProgressUI() {
         setProgress(0);
         highlightSteps(0, -1);
         clearBadge();
-        // Set all circles to Pending (status-0) by default
+        // Force all circles to Pending (status-0) to avoid any theme default colors
         stepItems.forEach((li) => {
             const circle = li.querySelector('.circle');
             if (!circle) return;
@@ -114,6 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Load contract ABI/address from contractABI.json with a strict no-cache policy.
+    // If unavailable, use the fallback address/ABI above.
     async function loadABI() {
         try {
             const res = await fetch('contractABI.json', { cache: 'no-cache' });
@@ -128,6 +148,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Query the contract for the current step and count of completed steps.
+    // Supports multiple method names for compatibility (getCurrentStep/currentStep, getCompletedSteps/completedSteps).
+    // Returns numeric values and the constructed contract instance.
     async function fetchSteps(provider, account, address, abi) {
         const contract = new ethers.Contract(address, abi, provider);
         let current, completed;
@@ -141,14 +164,15 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (_) {
             try { completed = await contract.completedSteps(account); } catch { completed = 0; }
         }
-        // Normalize to numbers
+        // Normalize to numbers from potential bigint
         const currentNum = typeof current === 'bigint' ? Number(current) : Number(current || 0);
         const completedNum = typeof completed === 'bigint' ? Number(completed) : Number(completed || 0);
-        // If completed not available, infer from current
+        // If completed not provided by contract, infer from current (previous steps complete)
         const inferredCompleted = completedNum || Math.max(0, currentNum - 1);
         return { currentStep: currentNum, completed: inferredCompleted, contract };
     }
 
+    // Apply a status class (traffic-light: 0 gray, 1 yellow, 2 green) to a specific step circle
     function applyStatusToStep(indexZeroBased, status) {
         const li = stepItems.find(el => Number(el.getAttribute('data-step-index')) === indexZeroBased);
         if (!li) return;
@@ -159,6 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
         circle.classList.add(`status-${s}`);
     }
 
+    // Populate per-step status by calling contract.getStepStatus(wallet, step)
+    // If not available, fallback to: completed => 2 (green), current => 1 (yellow), others => 0 (gray)
     async function updateStepStatuses(contract, account, fallbackFrom) {
         // Try using contract.getStepStatus for steps 1..TOTAL_STEPS
         let statuses = [];
@@ -186,6 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
         statuses.forEach((st, i) => applyStatusToStep(i, st));
     }
 
+    // Attempt to switch the connected wallet to Sepolia.
+    // Returns true if already on Sepolia or successfully switched/added, otherwise false.
     async function maybeSwitchToSepolia() {
         try {
             const eth = window.ethereum;
@@ -199,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA_CHAIN_HEX }] });
                 return true;
             } catch (err) {
+                // If Sepolia is unknown to the wallet, try adding it
                 if (err && (err.code === 4902 || err.code === -32603)) {
                     try {
                         await eth.request({
@@ -225,6 +254,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // After a connection or environment change, refresh session UI:
+    // - Show chain name/id, balance, full address, short avatar seed
+    // - Update page title with the address
+    // - On Sepolia, fetch contract data and update progress & statuses; otherwise, reset and prompt in badge tooltip
     async function refreshSession(provider, account) {
         try {
             const net = await provider.getNetwork();
@@ -254,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     resetProgressUI();
                 }
             } else {
+                // Not on Sepolia: clear badge and show hint, reset local UI
                 badge.textContent = '';
                 badge.title = 'Switch to Sepolia to load current step';
                 resetProgressUI();
@@ -263,6 +297,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Prompt user to connect with MetaMask. If not on Sepolia, offer to switch/add it.
+    // On success, refresh the session and remember the account for this tab via sessionStorage.
     async function connect() {
         if (!hasMetaMask) {
             alert('MetaMask not found. Please install MetaMask.');
@@ -286,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // If the user already authorized the site, pick the first account and refresh the session silently
     async function tryAutoConnect() {
         if (!hasMetaMask) return;
         try {
@@ -297,13 +334,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch { }
     }
 
+    // Helper to open/close the wallet details menu and sync aria-expanded
     function toggleMenu(force) {
         const isOpen = typeof force === 'boolean' ? force : menu.hidden;
         menu.hidden = !isOpen;
         avatarBtn.setAttribute('aria-expanded', String(isOpen));
     }
 
-    // Events
+    // Wire up UI events
     connectBtn.addEventListener('click', connect);
     avatarBtn && avatarBtn.addEventListener('click', () => toggleMenu());
     document.addEventListener('click', (e) => {
@@ -313,6 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleMenu(false);
     });
 
+    // Copy full address to clipboard with a small confirmation affordance on the button
     copyBtn && copyBtn.addEventListener('click', async () => {
         const addr = addressEl.textContent;
         try {
@@ -322,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch { }
     });
 
+    // Simulate a "disconnect" UI locally (MetaMask itself does not provide a true disconnect API)
     disconnectBtn && disconnectBtn.addEventListener('click', () => {
         sessionStorage.removeItem('connectedAccount');
         sessionBox.classList.add('d-none');
@@ -331,9 +371,10 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleMenu(false);
     });
 
-    // Chain/account changes
+    // React to wallet events to keep UI in sync when the user switches accounts or networks externally
     if (hasMetaMask) {
         const eth = window.ethereum;
+        // Account changed: if none, show connect button; else refresh session for the new account
         eth.on && eth.on('accountsChanged', async (accs) => {
             if (!accs || !accs.length) {
                 sessionBox.classList.add('d-none');
@@ -345,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const provider = new ethers.BrowserProvider(eth);
             await refreshSession(provider, accs[0]);
         });
+        // Chain changed: re-pull current account and refresh (covers switching to/from Sepolia)
         eth.on && eth.on('chainChanged', async () => {
             const provider = new ethers.BrowserProvider(eth);
             const accounts = await provider.listAccounts();
@@ -353,8 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initialize default Pending status to avoid blue before connection
+    // Initialize default Pending visuals to avoid theme/hover colors before any connection
     resetProgressUI();
 
+    // Attempt an automatic session restore on page load
     tryAutoConnect();
 })();

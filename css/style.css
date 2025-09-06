@@ -234,13 +234,25 @@ ul {
     --circle-fg: #374151;
     background: var(--circle-bg) !important;
     color: var(--circle-fg) !important;
-    pointer-events: none; /* circles themselves never react */
+    pointer-events: none;
+    /* circles themselves never react */
 }
 
 /* Status classes set the variables (traffic lights) */
-.stepper li .circle.status-0 { --circle-bg: #e5e7eb; --circle-fg: #374151; }
-.stepper li .circle.status-1 { --circle-bg: #f59e0b; --circle-fg: #111827; }
-.stepper li .circle.status-2 { --circle-bg: #16a34a; --circle-fg: #ffffff; }
+.stepper li .circle.status-0 {
+    --circle-bg: #e5e7eb;
+    --circle-fg: #374151;
+}
+
+.stepper li .circle.status-1 {
+    --circle-bg: #f59e0b;
+    --circle-fg: #111827;
+}
+
+.stepper li .circle.status-2 {
+    --circle-bg: #16a34a;
+    --circle-fg: #ffffff;
+}
 
 /* Disable any hover/focus-driven visual changes from ancestors */
 .stepper li:hover .circle,
