@@ -133,6 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
             circle.classList.remove('status-0', 'status-1', 'status-2');
             circle.classList.add('status-0');
         });
+        // Remove any submit buttons
+        document.querySelectorAll('.submit-step-btn').forEach(btn => btn.remove());
     }
 
     // Load contract ABI/address from contractABI.json with a strict no-cache policy.
@@ -204,6 +206,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Create or remove the Submit button for the current step based on statuses
+    function updateSubmitButton(provider, contract, account, currentStep, statuses) {
+        // Remove existing buttons to keep only one visible at a time
+        document.querySelectorAll('.submit-step-btn').forEach(btn => btn.remove());
+        const stepNum = Number(currentStep || 0);
+        if (!(stepNum >= 1 && stepNum <= TOTAL_STEPS)) return;
+        const idx = stepNum - 1;
+        const currStatus = Number(statuses?.[idx]);
+        const prevStatus = idx > 0 ? Number(statuses?.[idx - 1]) : undefined;
+        const prevApproved = stepNum === 1 ? true : prevStatus === 2;
+        const shouldShow = prevApproved && currStatus === 0; // current pending, previous approved
+        if (!shouldShow) return;
+        const li = stepItems.find(el => Number(el.getAttribute('data-step-index')) === idx);
+        if (!li) return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-primary submit-step-btn';
+        btn.textContent = 'Submit';
+        btn.title = `Submit step ${stepNum}`;
+        btn.addEventListener('click', async () => {
+            await submitCurrentStep(provider, contract, stepNum, account, btn);
+        });
+        li.appendChild(btn);
+    }
+
+    // Call the contract method submitStepN() with a signer; refresh UI on success
+    async function submitCurrentStep(provider, contract, stepNum, account, btnEl) {
+        try {
+            // Ensure on Sepolia
+            const net = await provider.getNetwork();
+            if (!net || net.chainId !== SEPOLIA_CHAIN_ID) {
+                const switched = await maybeSwitchToSepolia();
+                if (!switched) return;
+            }
+            const signer = await provider.getSigner();
+            const writable = contract.connect(signer);
+            const method = `submitStep${stepNum}`;
+            if (typeof writable[method] !== 'function') {
+                alert('Submit not supported by contract.');
+                return;
+            }
+            if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Submitting...'; }
+            const tx = await writable[method]();
+            await tx.wait();
+            if (btnEl) { btnEl.textContent = 'Submitted'; }
+            // Refresh session to reflect new statuses
+            await refreshSession(new ethers.BrowserProvider(window.ethereum), account);
+        } catch (e) {
+            console.error('Submit failed:', e);
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Submit'; }
+            alert('Transaction failed or was rejected.');
+        }
+    }
+
     // Populate per-step status by calling contract.getStepStatus(wallet, step)
     // If not available, fallback to: completed => 2 (green), current => 1 (yellow), others => 0 (gray)
     async function updateStepStatuses(contract, account, fallbackFrom) {
@@ -231,6 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         statuses.forEach((st, i) => applyStatusToStep(i, st));
+        // Also update the Submit button visibility for the current step
+        updateSubmitButton(new ethers.BrowserProvider(window.ethereum), contract, account, fallbackFrom?.currentStep, statuses);
     }
 
     // Attempt to switch the connected wallet to Sepolia.
