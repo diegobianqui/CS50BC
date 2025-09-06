@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialGradebookText = gradebookTitle ? gradebookTitle.textContent : '';
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
+    const progressHeader = document.getElementById('currentProgressHeader');
+    const progressContainer = document.getElementById('progressContainer');
 
     // All stepper <li> elements with a data-step-index (0..9)
     const stepItems = Array.from(document.querySelectorAll('.stepper [data-step-index]'));
@@ -135,6 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         // Remove any submit buttons
         document.querySelectorAll('.submit-step-btn').forEach(btn => btn.remove());
+        // Hide progress UI when not connected or off sepolia
+        progressHeader && progressHeader.classList.add('d-none');
+        progressContainer && progressContainer.classList.add('d-none');
+        progressText && progressText.classList.add('d-none');
     }
 
     // Load contract ABI/address from contractABI.json with a strict no-cache policy.
@@ -357,6 +363,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const { currentStep, completed, contract } = await fetchSteps(provider, account, address, abi);
                     badge.textContent = String(currentStep);
                     badge.title = `Current step for ${account}`;
+                    // Show progress UI when connected and on Sepolia
+                    progressHeader && progressHeader.classList.remove('d-none');
+                    progressContainer && progressContainer.classList.remove('d-none');
+                    progressText && progressText.classList.remove('d-none');
                     setProgress(completed);
                     highlightSteps(completed, currentStep);
                     await updateStepStatuses(contract, account, { currentStep, completed });
