@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressText = document.getElementById('progressText');
     const progressHeader = document.getElementById('currentProgressHeader');
     const progressContainer = document.getElementById('progressContainer');
+    const progressLoginAlert = document.getElementById('progressLoginAlert');
 
     // All stepper <li> elements with a data-step-index (0..9)
     const stepItems = Array.from(document.querySelectorAll('.stepper [data-step-index]'));
@@ -141,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         progressHeader && progressHeader.classList.add('d-none');
         progressContainer && progressContainer.classList.add('d-none');
         progressText && progressText.classList.add('d-none');
+        progressLoginAlert && progressLoginAlert.classList.remove('d-none');
     }
 
     // Load contract ABI/address from contractABI.json with a strict no-cache policy.
@@ -367,6 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     progressHeader && progressHeader.classList.remove('d-none');
                     progressContainer && progressContainer.classList.remove('d-none');
                     progressText && progressText.classList.remove('d-none');
+                    progressLoginAlert && progressLoginAlert.classList.add('d-none');
                     setProgress(completed);
                     highlightSteps(completed, currentStep);
                     await updateStepStatuses(contract, account, { currentStep, completed });
