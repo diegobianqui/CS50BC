@@ -55,6 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
         'function getStepStatus(address wallet, uint8 step) view returns (uint8)'
     ];
 
+    // Message to show for Submitted (yellow) steps
+    const SUBMITTED_MESSAGE = 'Your submission has been received. Be sure you\'ve submitted your Google Form as well! It may take up to three weeks for your submission to be graded, please be patient. Also note that your submissions will not necessarily be graded in order.';
+
     // If the page has no connect button, bail out (nothing to wire up)
     if (!connectBtn) return;
 
@@ -181,6 +184,24 @@ document.addEventListener('DOMContentLoaded', () => {
         circle.classList.remove('status-0', 'status-1', 'status-2');
         const s = Math.max(0, Math.min(2, Number(status || 0)));
         circle.classList.add(`status-${s}`);
+
+        // Show submitted guidance in the step content only for yellow (status-1)
+        const content = li.querySelector('.step-content');
+        if (content) {
+            const note = content.querySelector('.submitted-note');
+            if (s === 1) {
+                if (!note) {
+                    const p = document.createElement('p');
+                    p.className = 'submitted-note';
+                    p.textContent = SUBMITTED_MESSAGE;
+                    content.appendChild(p);
+                } else {
+                    note.textContent = SUBMITTED_MESSAGE;
+                }
+            } else if (note) {
+                note.remove();
+            }
+        }
     }
 
     // Populate per-step status by calling contract.getStepStatus(wallet, step)
