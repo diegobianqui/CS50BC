@@ -382,11 +382,80 @@ ul {
     position: absolute;
     top: 4px;
     right: 0;
+    z-index: 2;
+    margin-left: 0;
 }
 
 @media (max-width: 720px) {
     .stepper li .submit-step-btn {
         position: static;
+        top: auto;
+        right: auto;
         margin-top: 6px;
+        margin-left: 0;
     }
+}
+
+/* Approval sub-item under approved steps */
+.approval-subitem {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.approval-subitem a {
+    text-decoration: underline;
+}
+
+/* Compact the vertical stepper (~30% tighter) */
+.stepper.stepper-vertical li {
+    margin: 8px 0 !important;
+    /* was ~16px in many themes */
+}
+
+.stepper.stepper-vertical li a {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 0 !important;
+}
+
+.stepper.stepper-vertical li .label {
+    line-height: 1.2 !important;
+}
+
+.stepper.stepper-vertical li .step-content {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    margin-bottom: 0 !important;
+}
+
+/* Slightly smaller circle for tighter rows */
+.stepper.stepper-vertical li .circle {
+    width: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    font-size: 12px !important;
+}
+
+/* Keep approval sub-item tight as well */
+.approval-subitem {
+    margin-top: 2px;
+}
+
+/* Place Submit button next to the step title */
+.stepper.stepper-vertical li a.nohover {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    /* stretch to let the button push to the far right */
+}
+
+.stepper.stepper-vertical li a.nohover .label {
+    margin-right: 6px;
+    flex: 0 1 auto;
+}
+
+.stepper.stepper-vertical li .submit-step-btn {
+    margin-left: auto;
 }

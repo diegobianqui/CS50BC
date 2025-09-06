@@ -1,0 +1,8 @@
+{
+    "etherscanApiKey": "C88FKQS3XTP1AY1TBMA6XEURS4EU3A5ABY",
+    "contracts": {
+        "11155111": {
+            "gradebook": "0xdd63024953ad565748493F6B48a54E4886809667"
+        }
+    }
+}

@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // All stepper <li> elements with a data-step-index (0..9)
     const stepItems = Array.from(document.querySelectorAll('.stepper [data-step-index]'));
 
-    // Contract details on Sepolia. We attempt to load from contractABI.json with these fallbacks.
+    // Contract details fallbacks.
     const FALLBACK_CONTRACT_ADDRESS = '0xdd63024953ad565748493F6B48a54E4886809667';
     const FALLBACK_CONTRACT_ABI = [
         'function getCurrentStep(address wallet) view returns (uint8)',
@@ -146,6 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.submit-step-btn').forEach(btn => btn.remove());
         // Remove any submitted-note messages when not logged in
         document.querySelectorAll('.submitted-note').forEach(note => note.remove());
+        // Remove any approval sub-items
+        document.querySelectorAll('.approval-subitem').forEach(el => el.remove());
         // Hide progress UI when not connected or off sepolia
         progressHeader && progressHeader.classList.add('d-none');
         progressContainer && progressContainer.classList.add('d-none');
@@ -153,20 +155,54 @@ document.addEventListener('DOMContentLoaded', () => {
         progressLoginAlert && progressLoginAlert.classList.remove('d-none');
     }
 
-    // Load contract ABI/address from contractABI.json with a strict no-cache policy.
-    // If unavailable, use the fallback address/ABI above.
-    async function loadABI() {
+    // Load config.json for contract addresses keyed by chainId.
+    async function loadConfig() {
+        try {
+            const res = await fetch('config.json', { cache: 'no-cache' });
+            if (!res.ok) throw new Error('Failed to fetch config.json');
+            return await res.json();
+        } catch (e) {
+            console.warn('config.json not found or invalid, using fallbacks:', e);
+            return null;
+        }
+    }
+
+    // Load contract ABI/address. Prefer config.json by chainId, else contractABI.json, else fallbacks.
+    async function loadContractInfo(chainId) {
+        // 1) Try config.json
+        const config = await loadConfig();
+        if (config && config.contracts) {
+            const byId = config.contracts[String(chainId)];
+            const cfgAddr = byId && (byId.gradebook || byId.address);
+            if (cfgAddr) {
+                // Try to get ABI from contractABI.json, else use fallback ABI
+                try {
+                    const res = await fetch('contractABI.json', { cache: 'no-cache' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        const abi = (data && data.abi) || FALLBACK_CONTRACT_ABI;
+                        return { address: cfgAddr, abi };
+                    }
+                } catch (e) {
+                    // ignore, will fallback
+                }
+                return { address: cfgAddr, abi: FALLBACK_CONTRACT_ABI };
+            }
+        }
+        // 2) Fallback to contractABI.json if it includes an address
         try {
             const res = await fetch('contractABI.json', { cache: 'no-cache' });
-            if (!res.ok) throw new Error('Failed to fetch ABI JSON');
-            const data = await res.json();
-            const address = (data && (data.address || data.contractAddress)) || FALLBACK_CONTRACT_ADDRESS;
-            const abi = (data && data.abi) || FALLBACK_CONTRACT_ABI;
-            return { address, abi };
+            if (res.ok) {
+                const data = await res.json();
+                const address = (data && (data.address || data.contractAddress)) || FALLBACK_CONTRACT_ADDRESS;
+                const abi = (data && data.abi) || FALLBACK_CONTRACT_ABI;
+                return { address, abi };
+            }
         } catch (e) {
-            console.warn('Using fallback ABI due to error loading contractABI.json:', e);
-            return { address: FALLBACK_CONTRACT_ADDRESS, abi: FALLBACK_CONTRACT_ABI };
+            // ignore, will fallback
         }
+        // 3) Absolute fallback
+        return { address: FALLBACK_CONTRACT_ADDRESS, abi: FALLBACK_CONTRACT_ABI };
     }
 
     // Query the contract for the current step and count of completed steps.
@@ -244,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', async () => {
             await submitCurrentStep(provider, contract, stepNum, account, btn);
         });
+        // Append directly to <li> so it positions at the top-right per CSS
         li.appendChild(btn);
     }
 
@@ -305,6 +342,100 @@ document.addEventListener('DOMContentLoaded', () => {
         statuses.forEach((st, i) => applyStatusToStep(i, st));
         // Also update the Submit button visibility for the current step
         updateSubmitButton(new ethers.BrowserProvider(window.ethereum), contract, account, fallbackFrom?.currentStep, statuses);
+        return statuses;
+    }
+
+    // Build an Etherscan tx URL by chain
+    function etherscanTxUrl(chainId, txHash) {
+        const id = typeof chainId === 'bigint' ? Number(chainId) : Number(chainId);
+        if (id === 11155111) return `https://sepolia.etherscan.io/tx/${txHash}`;
+        // Fallback: mainnet pattern (not used here)
+        return `https://etherscan.io/tx/${txHash}`;
+    }
+
+    // Fetch approval transactions for this account by scanning Etherscan txlist of the contract
+    async function fetchApprovalTxMap(contractAddress, account, chainId, abi) {
+        try {
+            const cfg = await loadConfig();
+            const apiKey = cfg?.etherscanApiKey || cfg?.apiKeys?.etherscan || '';
+            const id = typeof chainId === 'bigint' ? Number(chainId) : Number(chainId);
+            if (id !== 11155111) return {}; // Only implement for Sepolia
+            const apiBase = 'https://api-sepolia.etherscan.io/api';
+            const url = `${apiBase}?module=account&action=txlist&address=${contractAddress}&startblock=0&endblock=99999999&sort=asc${apiKey ? `&apikey=${encodeURIComponent(apiKey)}` : ''}`;
+            const res = await fetch(url, { cache: 'no-cache' });
+            const json = await res.json();
+            if (!json || json.status === '0' || !Array.isArray(json.result)) return {};
+            const txs = json.result;
+            const iface = new ethers.Interface(abi);
+            const acct = (account || '').toLowerCase();
+            const caddr = (contractAddress || '').toLowerCase();
+            const map = {}; // stepNum -> txHash (latest wins due to asc order overwrite)
+            for (const tx of txs) {
+                if (!tx || (tx.to || '').toLowerCase() !== caddr) continue;
+                const data = tx.input;
+                if (!data || data === '0x') continue;
+                try {
+                    const parsed = iface.parseTransaction({ data });
+                    const name = parsed?.name || parsed?.fragment?.name;
+                    if (!name || !name.startsWith('approveStep')) continue;
+                    const stepNum = Number(name.replace('approveStep', ''));
+                    const arg0 = (parsed.args?.[0] || '').toString().toLowerCase();
+                    if (arg0 === acct && stepNum >= 1 && stepNum <= TOTAL_STEPS) {
+                        map[stepNum] = tx.hash;
+                    }
+                } catch (_) {
+                    // ignore undecodable tx
+                }
+            }
+            return map;
+        } catch (e) {
+            console.warn('Failed to fetch approval txs from Etherscan:', e);
+            return {};
+        }
+    }
+
+    function applyApprovalSubItem(stepIndexZeroBased, txHash, chainId) {
+        const li = stepItems.find(el => Number(el.getAttribute('data-step-index')) === stepIndexZeroBased);
+        if (!li) return;
+        const content = li.querySelector('.step-content');
+        if (!content) return;
+        // Remove any existing subitem first
+        const existing = content.querySelector('.approval-subitem');
+        if (existing) existing.remove();
+        const wrap = document.createElement('div');
+        wrap.className = 'approval-subitem mt-1';
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-check-circle text-success mr-1';
+        wrap.appendChild(icon);
+        const label = document.createElement('span');
+        label.textContent = 'Approved';
+        wrap.appendChild(label);
+        if (txHash) {
+            const space = document.createTextNode(' · ');
+            wrap.appendChild(space);
+            const a = document.createElement('a');
+            a.href = etherscanTxUrl(chainId, txHash);
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.textContent = 'View tx';
+            wrap.appendChild(a);
+        }
+        content.appendChild(wrap);
+    }
+
+    async function updateApprovalSubItemsForStatuses(contractAddress, account, chainId, abi, statuses) {
+        // Clear existing
+        document.querySelectorAll('.approval-subitem').forEach(el => el.remove());
+        if (!Array.isArray(statuses)) return;
+        const anyApproved = statuses.some(s => Number(s) === 2);
+        if (!anyApproved) return;
+        const txMap = await fetchApprovalTxMap(contractAddress, account, chainId, abi);
+        statuses.forEach((st, i) => {
+            if (Number(st) === 2) {
+                const txHash = txMap[i + 1];
+                applyApprovalSubItem(i, txHash, chainId);
+            }
+        });
     }
 
     // Attempt to switch the connected wallet to Sepolia.
@@ -370,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const badge = ensureStepBadge();
 
             if (net && net.chainId === SEPOLIA_CHAIN_ID) {
-                const { address, abi } = await loadABI();
+                const { address, abi } = await loadContractInfo(net.chainId);
                 try {
                     const { currentStep, completed, contract } = await fetchSteps(provider, account, address, abi);
                     badge.textContent = String(currentStep);
@@ -382,7 +513,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     progressLoginAlert && progressLoginAlert.classList.add('d-none');
                     setProgress(completed);
                     highlightSteps(completed, currentStep);
-                    await updateStepStatuses(contract, account, { currentStep, completed });
+                    const statuses = await updateStepStatuses(contract, account, { currentStep, completed });
+                    await updateApprovalSubItemsForStatuses(address, account, net.chainId, abi, statuses);
                 } catch (err) {
                     console.error('Failed to fetch steps:', err);
                     clearBadge();
