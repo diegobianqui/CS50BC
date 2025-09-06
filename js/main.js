@@ -260,8 +260,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Create or remove the Submit button for the current step based on statuses
     function updateSubmitButton(provider, contract, account, currentStep, statuses) {
-        // Remove existing buttons to keep only one visible at a time
+        // Remove existing buttons and action subitems to keep only one visible at a time
         document.querySelectorAll('.submit-step-btn').forEach(btn => btn.remove());
+        document.querySelectorAll('.action-subitem').forEach(el => el.remove());
         const stepNum = Number(currentStep || 0);
         if (!(stepNum >= 1 && stepNum <= TOTAL_STEPS)) return;
         const idx = stepNum - 1;
@@ -272,6 +273,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!shouldShow) return;
         const li = stepItems.find(el => Number(el.getAttribute('data-step-index')) === idx);
         if (!li) return;
+        const content = li.querySelector('.step-content');
+        if (!content) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'action-subitem mt-2';
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn btn-sm btn-primary submit-step-btn';
@@ -280,8 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', async () => {
             await submitCurrentStep(provider, contract, stepNum, account, btn);
         });
-        // Append directly to <li> so it positions at the top-right per CSS
-        li.appendChild(btn);
+        wrap.appendChild(btn);
+        content.appendChild(wrap);
     }
 
     // Call the contract method submitStepN() with a signer; refresh UI on success

@@ -378,11 +378,11 @@ ul {
     position: relative;
 }
 
+/* Stop globally forcing the submit button to the top-right; default to normal flow */
 .stepper li .submit-step-btn {
-    position: absolute;
-    top: 4px;
-    right: 0;
-    z-index: 2;
+    position: static;
+    top: auto;
+    right: auto;
     margin-left: 0;
 }
 
@@ -394,6 +394,34 @@ ul {
         margin-top: 6px;
         margin-left: 0;
     }
+}
+
+/* Only absolutely position submit buttons that are direct children of <li> (legacy placement) */
+.stepper li > .submit-step-btn {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    z-index: 2;
+}
+
+@media (max-width: 720px) {
+    .stepper li > .submit-step-btn {
+        position: static;
+        top: auto;
+        right: auto;
+        margin-top: 6px;
+    }
+}
+
+/* Narrow previous rule that pushed any submit button to the far right */
+/* Old: .stepper.stepper-vertical li .submit-step-btn { margin-left: auto; } */
+.stepper.stepper-vertical li a.nohover .submit-step-btn {
+    margin-left: auto;
+}
+
+/* Ensure sub-item submit button stays left-aligned inside its own row */
+.stepper.stepper-vertical li .action-subitem .submit-step-btn {
+    margin-left: 0 !important;
 }
 
 /* Approval sub-item under approved steps */
@@ -458,4 +486,16 @@ ul {
 
 .stepper.stepper-vertical li .submit-step-btn {
     margin-left: auto;
+}
+
+/* Sub-item area for actions under each step */
+.action-subitem {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-subitem .submit-step-btn {
+    margin-top: 2px;
 }
