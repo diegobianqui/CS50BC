@@ -74,6 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return two.toUpperCase();
     }
 
+    // Mask address for display: keep first 10 characters, replace the rest with '...'
+    function maskAddress(addr) {
+        if (!addr) return '';
+        return addr.length <= 10 ? addr : addr.slice(0, 10) + '...';
+    }
+
     // Ensure a small numeric badge element exists near the avatar to show current step
     function ensureStepBadge() {
         let badge = document.getElementById('walletStepBadge');
@@ -353,9 +359,11 @@ document.addEventListener('DOMContentLoaded', () => {
             chainEl.textContent = net ? `${net.name || 'Unknown'} (${net.chainId})` : 'Unknown';
             const bal = await provider.getBalance(account);
             balanceEl.textContent = `${ethers.formatEther(bal)} ETH`;
-            addressEl.textContent = account;
+            // Store full address for copy; display masked address for anonymity
+            addressEl.dataset.fullAddress = account;
+            addressEl.textContent = maskAddress(account);
             avatarBtn.textContent = shortAddr(account);
-            if (gradebookTitle) gradebookTitle.textContent = `Gradebook for ${account}`;
+            if (gradebookTitle) gradebookTitle.textContent = `Gradebook for ${maskAddress(account)}`;
             connectBtn.classList.add('d-none');
             sessionBox.classList.remove('d-none');
 
@@ -366,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const { currentStep, completed, contract } = await fetchSteps(provider, account, address, abi);
                     badge.textContent = String(currentStep);
-                    badge.title = `Current step for ${account}`;
+                    badge.title = `Current step for ${maskAddress(account)}`;
                     // Show progress UI when connected and on Sepolia
                     progressHeader && progressHeader.classList.remove('d-none');
                     progressContainer && progressContainer.classList.remove('d-none');
@@ -447,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Copy full address to clipboard with a small confirmation affordance on the button
     copyBtn && copyBtn.addEventListener('click', async () => {
-        const addr = addressEl.textContent;
+        const addr = addressEl.dataset.fullAddress || addressEl.textContent;
         try {
             await navigator.clipboard.writeText(addr);
             copyBtn.textContent = 'Copied!';
