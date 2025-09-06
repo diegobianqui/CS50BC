@@ -239,21 +239,24 @@ ul {
     background: #e5e7eb;
     color: #374151;
     font-weight: 700;
+    font-family: inherit;
+    line-height: 1;
     margin-right: 8px;
 }
 
-.stepper li.completed .circle {
+.stepper li.completed .circle:not(.status-0):not(.status-1):not(.status-2) {
     background: #16a34a;
     color: #fff;
 }
 
-.stepper li.active .circle {
+.stepper li.active .circle:not(.status-0):not(.status-1):not(.status-2) {
     background: #0d6efd;
     color: #fff;
 }
 
-.stepper .label {
-    font-weight: 600;
+/* Optional subtle outline to indicate active regardless of status color */
+.stepper li.active .circle {
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.35) inset;
 }
 
 /* Progress text spacing */
@@ -264,14 +267,23 @@ ul {
 
 /* Step status coloring: 0=grey, 1=yellow, 2=green */
 .stepper li .circle.status-0 {
-    background: #e5e7eb; /* gray-200 */
-    color: #374151;      /* gray-700 */
+    background: #e5e7eb !important; /* gray */
+    color: #374151 !important;
+    border: 0 !important;
+    font-family: inherit !important;
+    font-weight: 700 !important;
 }
 .stepper li .circle.status-1 {
-    background: #f59e0b; /* amber-500 */
-    color: #111827;      /* near-black for contrast */
+    background: #f59e0b !important; /* yellow */
+    color: #111827 !important;
+    border: 0 !important;
+    font-family: inherit !important;
+    font-weight: 700 !important;
 }
 .stepper li .circle.status-2 {
-    background: #16a34a; /* green-600 */
-    color: #ffffff;
+    background: #16a34a !important; /* green */
+    color: #ffffff !important;
+    border: 0 !important;
+    font-family: inherit !important;
+    font-weight: 700 !important;
 }
