@@ -242,6 +242,8 @@ ul {
     font-family: inherit;
     line-height: 1;
     margin-right: 8px;
+    transition: none !important;
+    animation: none !important;
 }
 
 .stepper li.completed .circle:not(.status-0):not(.status-1):not(.status-2) {
@@ -267,21 +269,26 @@ ul {
 
 /* Step status coloring: 0=grey, 1=yellow, 2=green */
 .stepper li .circle.status-0 {
-    background: #e5e7eb !important; /* gray */
+    background: #e5e7eb !important;
+    /* gray */
     color: #374151 !important;
     border: 0 !important;
     font-family: inherit !important;
     font-weight: 700 !important;
 }
+
 .stepper li .circle.status-1 {
-    background: #f59e0b !important; /* yellow */
+    background: #f59e0b !important;
+    /* yellow */
     color: #111827 !important;
     border: 0 !important;
     font-family: inherit !important;
     font-weight: 700 !important;
 }
+
 .stepper li .circle.status-2 {
-    background: #16a34a !important; /* green */
+    background: #16a34a !important;
+    /* green */
     color: #ffffff !important;
     border: 0 !important;
     font-family: inherit !important;
@@ -295,13 +302,33 @@ ul {
 }
 
 /* When our status-* classes are present, they must win */
-.stepper.stepper-vertical li .circle.status-0 { background: #e5e7eb !important; color: #374151 !important; }
-.stepper.stepper-vertical li .circle.status-1 { background: #f59e0b !important; color: #111827 !important; }
-.stepper.stepper-vertical li .circle.status-2 { background: #16a34a !important; color: #ffffff !important; }
+.stepper.stepper-vertical li .circle.status-0 {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.stepper.stepper-vertical li .circle.status-1 {
+    background: #f59e0b !important;
+    color: #111827 !important;
+}
+
+.stepper.stepper-vertical li .circle.status-2 {
+    background: #16a34a !important;
+    color: #ffffff !important;
+}
 
 /* Prevent any link hover/focus styles from recoloring ".circle" */
 .stepper.stepper-vertical a.nohover:hover .circle,
 .stepper.stepper-vertical a.nohover:focus .circle {
     background: inherit !important;
     color: inherit !important;
+}
+
+.stepper a.nohover:hover .circle,
+.stepper a.nohover:focus .circle,
+.stepper.stepper-vertical a:hover .circle,
+.stepper.stepper-vertical a:focus .circle {
+    transform: none !important;
+    box-shadow: none !important;
+    filter: none !important;
 }
