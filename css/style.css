@@ -186,15 +186,26 @@ ul {
 }
 
 .wallet-menu {
-    position: absolute;
-    right: 0;
-    margin-top: 8px;
+    position: fixed; /* anchor to viewport so it never overflows off-screen */
+    top: calc(12px + 36px + 8px); /* header offset + avatar height + spacing */
+    right: 12px; /* align to page's right margin */
+    margin-top: 0; /* margin not needed with fixed positioning */
     min-width: 260px;
+    max-height: calc(100vh - (12px + 36px + 8px) - 12px); /* keep fully visible */
+    overflow: auto; /* scroll if content too tall */
     background: #fff;
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     padding: 10px;
+    z-index: 1100; /* above header and avatar */
+}
+
+@media (max-width: 420px) {
+    .wallet-menu {
+        min-width: auto;
+        width: calc(100vw - 24px); /* respect 12px page gutters on both sides */
+    }
 }
 
 .wallet-menu .wm-row {
