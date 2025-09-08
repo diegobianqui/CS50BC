@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+//I've got help from Github Copilot on this file
+
 contract ChecklistTracker {
     // Enum-like: 0 = Pending (default), 1 = Submitted, 2 = Approved
     mapping(address => mapping(uint8 => uint8)) public stepStatus;
